@@ -1162,7 +1162,7 @@ class RunbotController(http.Controller):
         #    domain.append(('level', '=', level))
         if search:
             domain.append(('name', 'ilike', search))
-        logging_ids = Logging.search(cr, uid, domain)
+        logging_ids = Logging.search(cr, SUPERUSER_ID, domain)
 
         context = {
             'repo': build.repo_id,
