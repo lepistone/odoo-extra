@@ -261,6 +261,7 @@ class runbot_repo(osv.osv):
         if not os.path.isdir(os.path.join(repo.path)):
             os.makedirs(repo.path)
         if not os.path.isdir(os.path.join(repo.path, 'refs')):
+            _logger.info('running %s', ['git', 'clone', '--bare', repo.name, repo.path])
             run(['git', 'clone', '--bare', repo.name, repo.path])
         else:
             repo.git(['gc', '--auto', '--prune=all'])
