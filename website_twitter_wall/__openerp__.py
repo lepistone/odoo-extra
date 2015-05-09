@@ -25,5 +25,5 @@ Turn your event into an interactive experience by letting everybody post message
         'views/website_twitter_wall_templates.xml',
         'views/website_twitter_wall_views.xml',
     ],
-    'installable': True,
+    'installable': False,
 }
