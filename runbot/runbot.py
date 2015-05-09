@@ -328,7 +328,7 @@ class runbot_repo(osv.osv):
         # launch new tests
         testing = Build.search_count(cr, uid, domain_host + [('state', '=', 'testing')])
         pending = Build.search_count(cr, uid, domain + [('state', '=', 'pending')])
-        _logger.debug('testing: %d, workers: %d, pending: %d', testing, workers, pending)
+        _logger.debug('testing: %d, workers: %d, pending: %d (domain: %s)', testing, workers, pending, domain)
         while testing < workers and pending > 0:
 
             # find sticky pending build if any, otherwise, last pending (by id, not by sequence) will do the job
@@ -732,7 +732,7 @@ class runbot_build(osv.osv):
             os.closerange(3, os.sysconf("SC_OPEN_MAX"))
             lock(lock_path)
         out=open(log_path,"w")
-        _logger.debug("spawn: %s stdout: %s", ' '.join(cmd), log_path)
+        _logger.debug("spawn: %s stdout: %s", cmd, log_path)
         p=subprocess.Popen(cmd, stdout=out, stderr=out, preexec_fn=preexec_fn, shell=shell)
         return p.pid
 
@@ -1075,6 +1075,7 @@ class RunbotController(http.Controller):
             build_dict = {build.id: build for build in build_obj.browse(cr, uid, build_ids, context=request.context) }
 
             def branch_info(branch):
+                _logger.warning('branch_info for %d: %d builds', branch.id, len(build_by_branch_ids.get(branch.id, [])))
                 return {
                     'branch': branch,
                     'builds': [
