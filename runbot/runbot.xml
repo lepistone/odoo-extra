@@ -377,7 +377,7 @@
                             <td>
                                 <i t-if="br['branch'].sticky" class="fa fa-star"/>
                                 <b t-esc="br['branch'].branch_name"/>
-                                <small><t t-esc="br['builds'][0]['job_age']"/></small><br/>
+                                <small t-if="br['builds']"><t t-esc="br['builds'][0]['job_age']"/></small><br/>
                                 <div class="btn-group btn-group-xs">
                                     <a t-attf-href="{{br['branch'].branch_url}}" class="btn btn-default btn-xs">Branch or pull <i class="fa fa-github"/></a>
                                     <a t-attf-href="/runbot/#{repo.id}/#{br['branch'].branch_name}" class="btn btn-default btn-xs"><i class="fa fa-fast-forward" title="Quick Connect"/></a>

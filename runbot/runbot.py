@@ -1079,8 +1079,8 @@ class RunbotController(http.Controller):
                     'branch': branch,
                     'builds': [
                         self.build_info(build_dict[build_id])
-                        for build_id in build_by_branch_ids[branch.id]
-                        if branch.id in build_by_branch_ids
+                        for build_id in build_by_branch_ids.get(branch.id, [])
+                        if build_id in build_dict
                     ]
                 }
 
