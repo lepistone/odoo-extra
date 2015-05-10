@@ -212,7 +212,7 @@ class runbot_repo(osv.osv):
         """Execute git command cmd"""
         for repo in self.browse(cr, uid, ids, context=context):
             cmd = ['git', '--git-dir=%s' % repo.path] + cmd
-            _logger.info("git: %s", ' '.join(cmd))
+            _logger.debug("git: %s", ' '.join(cmd))
             return subprocess.check_output(cmd)
 
     def git_export(self, cr, uid, ids, treeish, dest, context=None):
@@ -265,7 +265,7 @@ class runbot_repo(osv.osv):
                 repo_name = repo.name
             else:
                 repo_name = 'https://' + repo.name
-            _logger.info('running %s', ['git', 'clone', '--bare', repo_name, repo.path])
+            _logger.debug('running %s', ['git', 'clone', '--bare', repo_name, repo.path])
             run(['git', 'clone', '--bare', repo_name, repo.path])
         else:
             repo.git(['gc', '--auto', '--prune=all'])
@@ -1100,7 +1100,7 @@ class RunbotController(http.Controller):
             build_dict = {build.id: build for build in build_obj.browse(cr, uid, build_ids, context=request.context) }
 
             def branch_info(branch):
-                _logger.warning('branch_info for %d: %d builds', branch.id, len(build_by_branch_ids.get(branch.id, [])))
+                _logger.debug('branch_info for %d: %d builds', branch.id, len(build_by_branch_ids.get(branch.id, [])))
                 return {
                     'branch': branch,
                     'builds': [
