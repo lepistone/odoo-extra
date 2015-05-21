@@ -370,8 +370,12 @@ class runbot_repo(osv.osv):
         build_ids = sticky.values()
         build_ids += non_sticky
         # terminate extra running builds
+        t0 = time.time()
         Build.kill(cr, uid, build_ids[running_max:])
+        t1= time.time()
+        _logger.info('Build.kill: %.2fs', t1-t0)
         Build.reap(cr, uid, build_ids)
+        _logger.info('Build.reap: %.2fs', time.time()-t1)
 
     def reload_nginx(self, cr, uid, context=None):
         settings = {}
@@ -392,7 +396,7 @@ class runbot_repo(osv.osv):
                 os.kill(pid, signal.SIGHUP)
             except Exception:
                 _logger.debug('start nginx')
-                run(['/usr/sbin/nginx', '-p', nginx_dir, '-c', 'nginx.conf'])
+                run(['sudo' '/usr/sbin/nginx', '-p', nginx_dir, '-c', 'nginx.conf'])
 
     def killall(self, cr, uid, ids=None, context=None):
         # kill switch
@@ -401,10 +405,21 @@ class runbot_repo(osv.osv):
         Build.kill(cr, uid, build_ids)
 
     def cron(self, cr, uid, ids=None, context=None):
+        _logger.info('cron start')
+        t0 = time.time()
         ids = self.search(cr, uid, [('auto', '=', True)], context=context)
+        t1 = time.time()
+        _logger.info('cron search lasted %.2fs', t1-t0)
         self.update(cr, uid, ids, context=context)
+        t2 = time.time()
+        _logger.info('cron update lasted %.2fs', t2-t1)
         self.scheduler(cr, uid, ids, context=context)
+        t3 = time.time()
+        _logger.info('cron scheduler lasted %.2fs', t3-t2)
         self.reload_nginx(cr, uid, context=context)
+        t4 = time.time()
+        _logger.info('cron reload nginx lasted %.2fs', t4-t3)
+        _logger.info('cron end, lasted %.2fs', t4-t0)
 
 class runbot_branch(osv.osv):
     _name = "runbot.branch"
@@ -890,7 +905,8 @@ class runbot_build(osv.osv):
         timeout = int(icp.get_param(cr, uid, 'runbot.timeout', default=1800))
 
         for build in self.browse(cr, uid, ids, context=context):
-            _logger.debug('schedule build %s state %s', build.dest, build.state)
+            t0 = time.time()
+            _logger.info('Build.schedule %s state %s', build.dest, build.state)
             if build.state == 'pending':
                 # allocate port and schedule first job
                 port = self.find_port(cr, uid)
@@ -930,28 +946,38 @@ class runbot_build(osv.osv):
                     v['job'] = jobs[jobs.index(build.job) + 1]
                 build.write(v)
             build.refresh()
+            _logger.info('Build.schedule %s new state %s', build.dest, build.state)
 
             # run job
             pid = None
             if build.state != 'done':
                 build.logger('running %s', build.job)
+                t1 = time.time()
                 job_method = getattr(self,build.job)
                 mkdirs([build.path('logs')])
                 lock_path = build.path('logs', '%s.lock' % build.job)
                 log_path = build.path('logs', '%s.txt' % build.job)
                 pid = job_method(cr, uid, build, lock_path, log_path)
                 build.write({'pid': pid})
+                t2 = time.time()
+                _logger.info('Build.schedule  %s %.2fs', build.job, t2-t1)
             # needed to prevent losing pids if multiple jobs are started and one them raise an exception
             cr.commit()
 
             if pid == -2:
                 # no process to wait, directly call next job
                 # FIXME find a better way that this recursive call
+                _logger.info('recursive Build.schedule')
                 build.schedule()
+                _logger.info('end recursive Build.schedule')
 
             # cleanup only needed if it was not killed
             if build.state == 'done':
+                t3 = time.time()
                 build.cleanup()
+                _logger.info('Build.cleanup: %.2fs', time.time() - t3)
+            _logger.info('end Build.schedule %s state %s lasted %.2fs', build.dest, build.state, time.time()-t0)
+
 
     def skip(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state': 'done', 'result': 'skipped'}, context=context)
