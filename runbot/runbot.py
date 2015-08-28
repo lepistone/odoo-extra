@@ -21,8 +21,12 @@ from collections import OrderedDict
 
 import dateutil.parser
 import requests
-from matplotlib.font_manager import FontProperties
-from matplotlib.textpath import TextToPath
+try:
+    from matplotlib.font_manager import FontProperties
+    from matplotlib.textpath import TextToPath
+except:
+    FontProperties = None
+    TextToPath = None
 import werkzeug
 
 import openerp
@@ -1361,8 +1365,11 @@ class RunbotController(http.Controller):
         }[state]
 
         def text_width(s):
-            fp = FontProperties(family='DejaVu Sans', size=11)
-            w, h, d = TextToPath().get_text_width_height_descent(s, fp, False)
+            if FontProperties:
+                fp = FontProperties(family='DejaVu Sans', size=11)
+                w, h, d = TextToPath().get_text_width_height_descent(s, fp, False)
+            else:
+                w = 0
             return int(w + 1)
 
         class Text(object):
