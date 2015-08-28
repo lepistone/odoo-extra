@@ -6,10 +6,10 @@
     'description': "Runbot",
     'author': 'OpenERP SA',
     'depends': ['website'],
-    'external_dependencies': {
+#    'external_dependencies': {
 # matplotlib is optional
 #        'python': ['matplotlib'],
-    },
+#    },
     'data': [
         'runbot.xml',
         'res_config_view.xml',
